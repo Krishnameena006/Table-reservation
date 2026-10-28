@@ -1,568 +1,579 @@
-:root {
-  --brown: #51382d;
-  --dark: #30221d;
-  --cream: #fbf7f0;
-  --white: #ffffff;
-  --gold: #c39a5b;
-  --muted: #82766e;
-  --border: #e9dfd2;
-  --green: #2f8058;
-  --red: #b84c43;
+
+const STORAGE_KEY = "tableTasteReservations";
+
+let selectedTable = "";
+let adminLoggedIn = false;
+
+const tables = [
+    { id: "T01", location: "Indoor" },
+    { id: "T02", location: "Indoor" },
+    { id: "T03", location: "Indoor" },
+    { id: "T04", location: "Indoor" },
+    { id: "T05", location: "Window" },
+    { id: "T06", location: "Window" },
+    { id: "T07", location: "Window" },
+    { id: "T08", location: "Window" },
+    { id: "T09", location: "Garden" },
+    { id: "T10", location: "Garden" },
+    { id: "T11", location: "Garden" },
+    { id: "T12", location: "Garden" }
+];
+
+const $ = id => document.getElementById(id);
+
+function getBookings() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch {
+        return [];
+    }
 }
 
-* { box-sizing: border-box; }
-
-html { scroll-behavior: smooth; scroll-padding-top: 90px; }
-
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: var(--cream);
-  color: var(--dark);
-  line-height: 1.6;
+function saveBookings(bookings) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
 }
 
-a { color: inherit; text-decoration: none; }
+function showPage(pageId) {
+    document.querySelectorAll(".page").forEach(page => {
+        page.classList.toggle("active", page.id === pageId);
+    });
 
-button, input, select, textarea { font: inherit; }
+    if (pageId === "reservation") {
+        renderTables();
+        updateSummary();
+    }
 
-button, .button { cursor: pointer; }
+    if (pageId === "admin" && adminLoggedIn) {
+        renderAdmin();
+    }
 
-.navbar {
-  min-height: 76px;
-  padding: 15px 5%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 22px;
-  background: #fffdf9;
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-.logo {
-  font-family: Georgia, serif;
-  font-size: 25px;
-  font-weight: bold;
-  white-space: nowrap;
+function setMessage(id, text, type = "") {
+    const element = $(id);
+    element.textContent = text;
+    element.className = "message " + type;
 }
 
-.logo span { color: var(--gold); }
-
-.navbar nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 18px;
+function todayString() {
+    const date = new Date();
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return localDate.toISOString().slice(0, 10);
 }
 
-.navbar nav a {
-  color: #625249;
-  font-size: 13px;
+$("year").textContent = new Date().getFullYear();
+$("bookingDate").min = todayString();
+
+$("bookingDate").addEventListener("change", () => {
+    selectedTable = "";
+    renderTables();
+    updateSummary();
+});
+
+$("bookingTime").addEventListener("change", () => {
+    selectedTable = "";
+    renderTables();
+    updateSummary();
+});
+
+$("diningLocation").addEventListener("change", () => {
+    selectedTable = "";
+    renderTables();
+    updateSummary();
+});
+
+$("guestCount").addEventListener("change", updateSummary);
+
+function getSelectedDateTime() {
+    const date = $("bookingDate").value;
+    const time = $("bookingTime").value;
+
+    if (!date || !time) return null;
+
+    const dateTime = new Date(`${date}T${time}:00`);
+
+    if (Number.isNaN(dateTime.getTime())) return null;
+
+    return dateTime;
 }
 
-.navbar nav a:hover { color: var(--gold); }
-
-.nav-button, .button {
-  display: inline-block;
-  border: 0;
-  border-radius: 5px;
-  padding: 12px 20px;
-  background: var(--brown);
-  color: white;
-  font-weight: bold;
-  text-align: center;
-  transition: .2s;
+function isSameSlot(booking, date, time) {
+    return booking.date === date &&
+        booking.time === time &&
+        !["Cancelled", "Completed"].includes(booking.status);
 }
 
-.nav-button { font-size: 13px; }
+function renderTables() {
+    const grid = $("tableGrid");
+    if (!grid) return;
 
-.button:hover, .nav-button:hover {
-  background: var(--gold);
-  color: var(--dark);
+    const location = $("diningLocation").value;
+    const date = $("bookingDate").value;
+    const time = $("bookingTime").value;
+    const bookings = getBookings();
+
+    grid.innerHTML = "";
+
+    tables.filter(table => table.location === location).forEach(table => {
+        const occupied = bookings.some(booking =>
+            booking.table === table.id &&
+            isSameSlot(booking, date, time)
+        );
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "table-seat";
+        button.innerHTML = `${table.id}<small>${table.location}</small>`;
+
+        if (occupied) {
+            button.classList.add("occupied");
+            button.disabled = true;
+            button.title = "This table is already reserved";
+        } else if (selectedTable === table.id) {
+            button.classList.add("selected");
+        }
+
+        button.addEventListener("click", () => {
+            if (occupied) return;
+            selectedTable = table.id;
+            renderTables();
+            updateSummary();
+            setMessage("tableMessage", "Table " + table.id + " selected.", "success");
+        });
+
+        grid.appendChild(button);
+    });
 }
 
-.button-light {
-  background: #f2e8d9;
-  color: var(--brown);
+function findTables() {
+    const form = $("bookingForm");
+
+    if (!form.reportValidity()) return;
+
+    const dateTime = getSelectedDateTime();
+
+    if (!dateTime || dateTime < new Date()) {
+        setMessage("tableMessage", "Please select a future date and time.", "error");
+        return;
+    }
+
+    selectedTable = "";
+    renderTables();
+    updateSummary();
+
+    const availableCount = tables.filter(table =>
+        table.location === $("diningLocation").value &&
+        !getBookings().some(booking =>
+            booking.table === table.id &&
+            isSameSlot(booking, $("bookingDate").value, $("bookingTime").value)
+        )
+    ).length;
+
+    setMessage(
+        "tableMessage",
+        availableCount
+            ? `Found ${availableCount} available table(s). Select one above.`
+            : "No tables are available for this time. Please choose another time or location.",
+        availableCount ? "success" : "error"
+    );
 }
 
-.hero {
-  min-height: 560px;
-  padding: 70px 7%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 55px;
-  background: #f3e8d9;
+function updateSummary() {
+    const date = $("bookingDate").value;
+    const time = $("bookingTime").value;
+    const guests = $("guestCount").value;
+    const location = $("diningLocation").value;
+
+    if (!date || !time) {
+        $("summaryText").textContent = "Select a date and time to continue.";
+        $("confirmButton").disabled = true;
+        return;
+    }
+
+    $("summaryText").textContent =
+        `${date} at ${time} · ${guests} guest(s) · ${location}` +
+        (selectedTable ? ` · Table ${selectedTable}` : " · Select a table");
+
+    $("confirmButton").disabled = !selectedTable;
 }
 
-.hero-content { max-width: 540px; }
+function confirmBooking() {
+    const form = $("bookingForm");
 
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-size: 11px;
-  font-weight: bold;
-  color: #9c7744;
+    if (!form.reportValidity()) return;
+
+    const dateTime = getSelectedDateTime();
+
+    if (!dateTime || dateTime < new Date()) {
+        setMessage("tableMessage", "Please select a future date and time.", "error");
+        return;
+    }
+
+    if (!selectedTable) {
+        setMessage("tableMessage", "Please select a table.", "error");
+        return;
+    }
+
+    const bookings = getBookings();
+
+    const alreadyBooked = bookings.some(booking =>
+        booking.table === selectedTable &&
+        isSameSlot(booking, $("bookingDate").value, $("bookingTime").value)
+    );
+
+    if (alreadyBooked) {
+        selectedTable = "";
+        renderTables();
+        updateSummary();
+        setMessage("tableMessage", "That table has just been booked. Please select another.", "error");
+        return;
+    }
+
+    const booking = {
+        id: "TT" + Date.now().toString().slice(-9),
+        name: $("customerName").value.trim(),
+        email: $("customerEmail").value.trim().toLowerCase(),
+        phone: $("customerPhone").value.trim(),
+        date: $("bookingDate").value,
+        time: $("bookingTime").value,
+        guests: $("guestCount").value,
+        location: $("diningLocation").value,
+        table: selectedTable,
+        request: $("specialRequest").value.trim(),
+        status: "Confirmed",
+        createdAt: Date.now()
+    };
+
+    bookings.push(booking);
+    saveBookings(bookings);
+
+    showReceipt(booking);
+    form.reset();
+    $("bookingDate").min = todayString();
+    $("guestCount").value = "2";
+    selectedTable = "";
+    renderTables();
+    updateSummary();
+    setMessage("tableMessage", "Reservation created successfully.", "success");
 }
 
-.hero h1 {
-  font-family: Georgia, serif;
-  font-size: clamp(42px, 5.4vw, 70px);
-  line-height: 1.08;
-  margin: 15px 0;
-  color: var(--brown);
+function formatDate(date) {
+    if (!date) return "-";
+
+    return new Date(date + "T00:00:00").toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
 }
 
-.hero-content > p:not(.eyebrow) {
-  max-width: 440px;
-  color: #716158;
-  margin-bottom: 28px;
+function formatTime(time) {
+    if (!time) return "-";
+
+    const [hours, minutes] = time.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+
+    return date.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
 }
 
-.text-link {
-  margin-left: 18px;
-  font-size: 13px;
-  font-weight: bold;
+function showReceipt(booking) {
+    $("receiptStatus").textContent = booking.status;
+    $("receiptStatus").className = "status " + booking.status.toLowerCase();
+
+    const details = [
+        ["Booking ID", booking.id],
+        ["Customer", booking.name],
+        ["Email", booking.email],
+        ["Phone", booking.phone],
+        ["Date", formatDate(booking.date)],
+        ["Time", formatTime(booking.time)],
+        ["Guests", booking.guests],
+        ["Dining Location", booking.location],
+        ["Table Number", booking.table],
+        ["Special Request", booking.request || "None"]
+    ];
+
+    $("receiptDetails").replaceChildren();
+
+    details.forEach(([label, value]) => {
+        const line = document.createElement("div");
+        line.className = "receipt-line";
+
+        const left = document.createElement("span");
+        left.textContent = label;
+
+        const right = document.createElement("span");
+        right.textContent = value;
+
+        line.append(left, right);
+        $("receiptDetails").appendChild(line);
+    });
+
+    $("lateWarning").classList.add("hidden");
+    $("receiptModal").classList.remove("hidden");
 }
 
-.hero-stats {
-  display: flex;
-  gap: 35px;
-  margin-top: 45px;
-  flex-wrap: wrap;
+function closeReceipt() {
+    $("receiptModal").classList.add("hidden");
 }
 
-.hero-stats div { display: flex; flex-direction: column; }
+$("receiptModal").addEventListener("click", event => {
+    if (event.target === $("receiptModal")) closeReceipt();
+});
 
-.hero-stats strong { font-size: 21px; color: var(--brown); }
-.hero-stats span { font-size: 11px; color: var(--muted); }
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeReceipt();
+});
 
-.hero-image {
-  min-height: 390px;
-  border-radius: 170px 170px 8px 8px;
-  background:
-    linear-gradient(0deg, rgba(35, 22, 15, .76), transparent 65%),
-    url("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1100&q=85")
-    center/cover;
-  display: flex;
-  align-items: flex-end;
-  padding: 30px;
-  box-shadow: 0 20px 50px #6a493526;
+$("lookupForm").addEventListener("submit", event => {
+    event.preventDefault();
+
+    const email = $("lookupEmail").value.trim().toLowerCase();
+    const results = $("bookingResults");
+
+    const matches = getBookings()
+        .filter(booking => booking.email === email)
+        .sort((a, b) => b.createdAt - a.createdAt);
+
+    results.replaceChildren();
+
+    if (!matches.length) {
+        const message = document.createElement("p");
+        message.className = "message";
+        message.textContent = "No bookings found for this email address.";
+        results.appendChild(message);
+        return;
+    }
+
+    matches.forEach(booking => {
+        const card = document.createElement("div");
+        card.className = "booking-card";
+
+        const title = document.createElement("h3");
+        title.textContent = booking.name;
+
+        const status = document.createElement("span");
+        status.className = "status " + booking.status.toLowerCase();
+        status.textContent = booking.status;
+
+        card.append(title, status);
+
+        [
+            ["Booking ID", booking.id],
+            ["Date", formatDate(booking.date)],
+            ["Time", formatTime(booking.time)],
+            ["Table", booking.table],
+            ["Guests", booking.guests],
+            ["Location", booking.location]
+        ].forEach(([label, value]) => {
+            const p = document.createElement("p");
+            p.textContent = `${label}: ${value}`;
+            card.appendChild(p);
+        });
+
+        const actions = document.createElement("div");
+        actions.className = "booking-actions";
+
+        const receiptButton = document.createElement("button");
+        receiptButton.className = "primary-btn";
+        receiptButton.textContent = "View Receipt";
+        receiptButton.addEventListener("click", () => showReceipt(booking));
+        actions.appendChild(receiptButton);
+
+        if (booking.status === "Confirmed") {
+            const cancelButton = document.createElement("button");
+            cancelButton.className = "secondary-btn";
+            cancelButton.textContent = "Cancel Booking";
+            cancelButton.addEventListener("click", () => {
+                if (!confirm("Are you sure you want to cancel this booking?")) return;
+
+                const all = getBookings();
+                const target = all.find(item => item.id === booking.id);
+
+                if (target && target.status === "Confirmed") {
+                    target.status = "Cancelled";
+                    saveBookings(all);
+                    $("lookupForm").requestSubmit();
+                }
+            });
+
+            actions.appendChild(cancelButton);
+        }
+
+        card.appendChild(actions);
+        results.appendChild(card);
+    });
+});
+
+// Admin login. Demo credentials only; not secure authentication.
+$("adminForm").addEventListener("submit", event => {
+    event.preventDefault();
+
+    if (
+        $("adminUsername").value === "kitchu" &&
+        $("adminPassword").value === "kitchu2006@"
+    ) {
+        adminLoggedIn = true;
+        $("adminLogin").classList.add("hidden");
+        $("adminDashboard").classList.remove("hidden");
+        setMessage("loginMessage", "");
+        renderAdmin();
+    } else {
+        setMessage("loginMessage", "Incorrect username or password.", "error");
+    }
+});
+
+function adminLogout() {
+    adminLoggedIn = false;
+    $("adminLogin").classList.remove("hidden");
+    $("adminDashboard").classList.add("hidden");
+    $("adminForm").reset();
 }
 
-.image-label { color: white; }
-.image-label span { color: #f4d9a6; font-size: 12px; }
-.image-label h3 { font: 25px Georgia, serif; margin: 8px 0 0; }
+function renderAdmin() {
+    if (!adminLoggedIn) return;
 
-.section { padding: 75px 7%; }
+    const bookings = getBookings().sort((a, b) => b.createdAt - a.createdAt);
+    $("totalCount").textContent = bookings.length;
+    $("confirmedCount").textContent = bookings.filter(b => b.status === "Confirmed").length;
+    $("cancelledCount").textContent = bookings.filter(b => b.status === "Cancelled").length;
 
-.section-heading { text-align: center; margin-bottom: 35px; }
+    const tbody = $("adminTableBody");
+    tbody.replaceChildren();
 
-.section-heading h2 {
-  font: 38px Georgia, serif;
-  color: var(--brown);
-  margin: 5px 0 10px;
+    $("adminEmpty").textContent = bookings.length ? "" : "No reservations have been made yet.";
+
+    bookings.forEach(booking => {
+        const row = document.createElement("tr");
+
+        const values = [
+            booking.name,
+            booking.email + " / " + booking.phone,
+            formatDate(booking.date) + " " + formatTime(booking.time),
+            booking.table,
+            booking.guests,
+            booking.status
+        ];
+
+        values.forEach(value => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.appendChild(cell);
+        });
+
+        const actionCell = document.createElement("td");
+
+        if (booking.status === "Confirmed") {
+            const arrived = document.createElement("button");
+            arrived.className = "secondary-btn";
+            arrived.textContent = "Arrived";
+            arrived.addEventListener("click", () => updateStatus(booking.id, "Arrived"));
+
+            const cancel = document.createElement("button");
+            cancel.className = "secondary-btn";
+            cancel.textContent = "Cancel";
+            cancel.addEventListener("click", () => {
+                if (confirm("Cancel this reservation?")) {
+                    updateStatus(booking.id, "Cancelled");
+                }
+            });
+
+            actionCell.append(arrived, cancel);
+        } else if (booking.status === "Arrived") {
+            const complete = document.createElement("button");
+            complete.className = "secondary-btn";
+            complete.textContent = "Complete";
+            complete.addEventListener("click", () => updateStatus(booking.id, "Completed"));
+            actionCell.appendChild(complete);
+        } else {
+            actionCell.textContent = "-";
+        }
+
+        row.appendChild(actionCell);
+        tbody.appendChild(row);
+    });
 }
 
-.section-heading > p:last-child {
-  color: var(--muted);
-  font-size: 14px;
+function updateStatus(id, status) {
+    const bookings = getBookings();
+    const booking = bookings.find(item => item.id === id);
+
+    if (!booking) return;
+
+    booking.status = status;
+    saveBookings(bookings);
+    renderAdmin();
 }
 
-.menu-filters {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 30px;
+function exportCSV() {
+    if (!adminLoggedIn) return;
+
+    const bookings = getBookings();
+
+    if (!bookings.length) {
+        alert("There are no bookings to export.");
+        return;
+    }
+
+    const columns = [
+        "id", "name", "email", "phone", "date", "time",
+        "table", "location", "guests", "status", "request"
+    ];
+
+    const escapeCSV = value =>
+        '"' + String(value ?? "").replace(/"/g, '""') + '"';
+
+    const csv = [
+        columns.join(","),
+        ...bookings.map(booking =>
+            columns.map(column => escapeCSV(booking[column])).join(",")
+        )
+    ].join("\r\n");
+
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "table-taste-bookings.csv";
+    link.click();
+
+    URL.revokeObjectURL(url);
 }
 
-.filter {
-  padding: 9px 19px;
-  border: 1px solid var(--border);
-  border-radius: 30px;
-  background: white;
-  color: var(--brown);
+// Automatically cancel confirmed reservations more than 15 minutes late.
+// This demo checks while the website is open or when it is reopened.
+function checkLateBookings() {
+    const bookings = getBookings();
+    const now = Date.now();
+    let changed = false;
+
+    bookings.forEach(booking => {
+        if (booking.status !== "Confirmed") return;
+
+        const reservationTime = new Date(`${booking.date}T${booking.time}:00`).getTime();
+
+        if (!Number.isNaN(reservationTime) &&
+            now > reservationTime + 15 * 60 * 1000) {
+            booking.status = "Cancelled";
+            booking.cancelReason = "Cancelled because arrival was more than 15 minutes late.";
+            changed = true;
+        }
+    });
+
+    if (changed) {
+        saveBookings(bookings);
+        if (adminLoggedIn) renderAdmin();
+    }
 }
 
-.filter.active, .filter:hover {
-  background: var(--brown);
-  color: white;
-}
+checkLateBookings();
+setInterval(checkLateBookings, 30000);
 
-.menu-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 22px;
-}
-
-.menu-card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-  transition: transform .2s, box-shadow .2s;
-}
-
-.menu-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px #51382d12;
-}
-
-.menu-card img {
-  display: block;
-  width: 100%;
-  height: 190px;
-  object-fit: cover;
-  background: #eee4d6;
-}
-
-.menu-card-body { padding: 17px; }
-
-.menu-card h3 { margin: 0 0 5px; color: var(--brown); }
-.menu-card p { font-size: 13px; color: var(--muted); min-height: 42px; }
-.menu-card-bottom { display: flex; align-items: center; justify-content: space-between; }
-.menu-price { font-size: 18px; font-weight: bold; color: var(--brown); }
-.menu-category { color: #997344; font-size: 11px; }
-
-.reservation-section { background: #f2e8da; }
-
-.reservation-layout {
-  max-width: 1150px;
-  margin: auto;
-  display: grid;
-  grid-template-columns: 1.6fr .8fr;
-  gap: 25px;
-  align-items: start;
-}
-
-.panel {
-  background: white;
-  padding: 26px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 5px 22px #51382d08;
-}
-
-.panel h3 { margin-top: 0; color: var(--brown); font-family: Georgia, serif; }
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 17px;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: bold;
-  color: #51433b;
-}
-
-input, select, textarea {
-  width: 100%;
-  min-width: 0;
-  padding: 11px 12px;
-  border: 1px solid #e2d8cc;
-  border-radius: 5px;
-  background: #fffdfb;
-  color: var(--dark);
-  outline: none;
-}
-
-input:focus, select:focus, textarea:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px #c39a5b1c;
-}
-
-.subheading { margin-top: 28px; }
-
-.table-legend {
-  display: flex;
-  gap: 17px;
-  flex-wrap: wrap;
-  margin: 15px 0;
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 4px;
-}
-
-.available { background: #64a77e; }
-.selected { background: var(--gold); }
-.occupied { background: #c3b9b1; }
-
-.table-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.table-seat {
-  padding: 13px 5px;
-  border: 1px solid #b9d8c3;
-  border-radius: 7px;
-  background: #eef7f0;
-  color: #326b48;
-  text-align: center;
-  font-size: 12px;
-}
-
-.table-seat span { display: block; font-size: 10px; margin-top: 3px; }
-
-.table-seat.chosen {
-  background: #f2e1c2;
-  color: #6b4920;
-  border: 2px solid var(--gold);
-}
-
-.table-seat:disabled {
-  cursor: not-allowed;
-  background: #eee9e5;
-  border-color: #e2d9d2;
-  color: #a59b93;
-}
-
-.small-note { font-size: 11px; color: var(--muted); }
-
-.full-button { width: 100%; margin-top: 12px; }
-
-.booking-summary { position: sticky; top: 95px; }
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px 0;
-  border-bottom: 1px solid #f0e8df;
-  font-size: 12px;
-}
-
-.summary-row span { color: var(--muted); }
-.summary-row strong { text-align: right; overflow-wrap: anywhere; }
-
-.summary-total {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 22px;
-  padding: 18px 0;
-  border-top: 1px dashed var(--border);
-  color: var(--brown);
-}
-
-.lookup-bar {
-  max-width: 650px;
-  display: flex;
-  gap: 10px;
-  margin: auto auto 25px;
-}
-
-.booking-list {
-  max-width: 1000px;
-  margin: auto;
-  display: grid;
-  gap: 13px;
-}
-
-.booking-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: white;
-}
-
-.booking-card h3 { margin: 0; color: var(--brown); font-size: 16px; }
-.booking-card p { margin: 5px 0; color: var(--muted); font-size: 12px; }
-
-.status {
-  display: inline-block;
-  padding: 4px 9px;
-  border-radius: 30px;
-  font-size: 11px;
-  background: #e4f3e9;
-  color: #287148;
-}
-
-.status.cancelled { background: #f8e5e2; color: #a13932; }
-
-.small-button {
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: white;
-  color: var(--brown);
-  font-size: 12px;
-}
-
-.cancel-button { color: var(--red); }
-
-.reviews-section { background: #fffdf9; }
-
-.review-layout {
-  max-width: 1050px;
-  margin: auto;
-  display: grid;
-  grid-template-columns: 1.1fr .9fr;
-  gap: 25px;
-  align-items: start;
-}
-
-.review-list { display: grid; gap: 15px; }
-
-.review-card {
-  padding: 22px;
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.review-card h3 { margin: 0; color: var(--brown); }
-.stars { color: #c29342; letter-spacing: 2px; }
-.review-card p { font-size: 13px; color: var(--muted); }
-
-#review-form { display: grid; gap: 16px; }
-#review-form h3 { margin-bottom: 0; }
-
-.admin-section { background: #f3eade; }
-
-.admin-warning {
-  max-width: 1150px;
-  margin: 0 auto 18px;
-  padding: 12px 15px;
-  background: #fff2d9;
-  border: 1px solid #ecd2a2;
-  color: #77521e;
-  font-size: 12px;
-  border-radius: 5px;
-}
-
-.stats-grid {
-  max-width: 1150px;
-  margin: auto auto 25px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 15px;
-}
-
-.stat-card {
-  background: white;
-  padding: 22px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
-.stat-card span { display: block; color: var(--muted); font-size: 12px; }
-.stat-card strong { display: block; font-size: 30px; color: var(--brown); }
-
-.table-panel, .waitlist-panel { max-width: 1150px; margin: 0 auto 22px; }
-
-.admin-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-}
-
-.table-scroll { overflow-x: auto; }
-
-table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; }
-
-th, td {
-  padding: 13px 10px;
-  border-bottom: 1px solid #eee5db;
-  text-align: left;
-}
-
-th { color: var(--brown); background: #faf6f0; }
-td { color: #65564c; }
-
-.waitlist-form {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-footer {
-  text-align: center;
-  padding: 35px 20px;
-  background: var(--dark);
-  color: #e7dacf;
-}
-
-footer .logo { color: white; }
-footer p { font-size: 12px; }
-
-.toast {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  max-width: calc(100% - 40px);
-  padding: 14px 20px;
-  border-radius: 7px;
-  background: var(--dark);
-  color: white;
-  box-shadow: 0 5px 20px #0002;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(10px);
-  transition: .2s;
-  z-index: 30;
-}
-
-.toast.show { opacity: 1; transform: translateY(0); }
-
-.empty-state {
-  padding: 25px;
-  text-align: center;
-  background: white;
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-@media (max-width: 950px) {
-  .navbar { flex-wrap: wrap; }
-  .navbar nav { order: 3; width: 100%; }
-  .hero { gap: 25px; padding: 50px 5%; }
-  .reservation-layout { grid-template-columns: 1fr; }
-  .booking-summary { position: static; }
-  .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (max-width: 650px) {
-  .navbar { position: static; justify-content: center; }
-  .navbar nav { gap: 12px; }
-  .navbar nav a { font-size: 12px; }
-  .nav-button { display: none; }
-  .hero { grid-template-columns: 1fr; }
-  .hero-image { min-height: 300px; border-radius: 100px 100px 8px 8px; }
-  .hero-stats { gap: 20px; }
-  .section { padding: 48px 5%; }
-  .section-heading h2 { font-size: 31px; }
-  .menu-grid { grid-template-columns: 1fr; }
-  .form-grid, .review-layout { grid-template-columns: 1fr; }
-  .table-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .lookup-bar { flex-direction: column; }
-  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .waitlist-form { grid-template-columns: 1fr; }
-  .panel { padding: 19px; }
-  .text-link { display: inline-block; margin: 18px 0 0; }
-}
+renderTables();
+updateSummary();
