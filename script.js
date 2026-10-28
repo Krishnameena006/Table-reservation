@@ -1,597 +1,828 @@
-const $ = (id) => document.getElementById(id);
 
-const KEYS = {
-  bookings: "tt_bookings_v1",
-  reviews: "tt_reviews_v1",
-  waitlist: "tt_waitlist_v1"
-};
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
-function readData(key) {
-  try {
-    const data = JSON.parse(localStorage.getItem(key) || "[]");
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
+:root {
+    --cream: #fbf6ee;
+    --paper: #fffdf9;
+    --brown: #56341f;
+    --dark: #2d1c12;
+    --accent: #925331;
+    --border: #e8d9c7;
+    --muted: #806e60;
+    --green: #26754c;
+    --red: #bd3737;
 }
 
-function saveData(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
+body {
+    background: var(--cream);
+    color: var(--dark);
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.6;
 }
 
-let bookings = readData(KEYS.bookings);
-let reviews = readData(KEYS.reviews);
-let waitlist = readData(KEYS.waitlist);
-let selectedTable = null;
-
-const tables = Array.from({ length: 12 }, (_, index) => ({
-  id: `T${String(index + 1).padStart(2, "0")}`,
-  capacity: index < 4 ? 2 : index < 9 ? 4 : 6
-}));
-
-const menuItems = [
-  {
-    name: "Crispy Garlic Bread",
-    category: "Starters",
-    price: 180,
-    description: "Toasted bread with garlic butter and herbs.",
-    image: "photo-1573140247632-f8fd74997d5c"
-  },
-  {
-    name: "Creamy Mushroom Soup",
-    category: "Starters",
-    price: 220,
-    description: "A warm, creamy soup made with mushrooms.",
-    image: "photo-1547592166-23ac45744acd"
-  },
-  {
-    name: "Classic Margherita Pizza",
-    category: "Main Course",
-    price: 350,
-    description: "Fresh tomato, mozzarella and basil.",
-    image: "photo-1579751626657-72bc17010498"
-  },
-  {
-    name: "Grilled Paneer Bowl",
-    category: "Main Course",
-    price: 320,
-    description: "Grilled paneer served with seasoned vegetables.",
-    image: "photo-1512621776951-a57141f2eefd"
-  },
-  {
-    name: "Chocolate Brownie",
-    category: "Desserts",
-    price: 190,
-    description: "Rich chocolate brownie with a soft centre.",
-    image: "photo-1606313564200-e75d5e30476c"
-  },
-  {
-    name: "Classic Cheesecake",
-    category: "Desserts",
-    price: 240,
-    description: "Smooth cheesecake with a biscuit base.",
-    image: "photo-1533134242443-d4fd215305ad"
-  },
-  {
-    name: "Fresh Lemon Cooler",
-    category: "Drinks",
-    price: 100,
-    description: "A refreshing lemon drink served chilled.",
-    image: "photo-1513558161293-cdaf765edfd7"
-  },
-  {
-    name: "Cold Coffee",
-    category: "Drinks",
-    price: 150,
-    description: "Chilled coffee with a creamy finish.",
-    image: "photo-1461023058943-07fcbe16d735"
-  },
-  {
-    name: "Garden Fresh Salad",
-    category: "Starters",
-    price: 210,
-    description: "Fresh greens, tomatoes and house dressing.",
-    image: "photo-1512621776951-a57141f2eefd"
-  }
-];
-
-function showToast(message) {
-  const toast = $("toast");
-  toast.textContent = message;
-  toast.classList.add("show");
-
-  clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => {
-    toast.classList.remove("show");
-  }, 3000);
+button, input, select, textarea {
+    font: inherit;
 }
 
-function localDateString(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+button, a {
+    -webkit-tap-highlight-color: transparent;
 }
 
-const today = localDateString();
-$("booking-date").min = today;
-$("wait-date").min = today;
-$("current-year").textContent = new Date().getFullYear();
-$("booking-date").value = today;
-
-function renderMenu(category = "All") {
-  const filtered = category === "All"
-    ? menuItems
-    : menuItems.filter(item => item.category === category);
-
-  $("menu-grid").innerHTML = filtered.map(item => `
-    <article class="menu-card">
-      <img
-        src="https://images.unsplash.com/${item.image}?auto=format&fit=crop&w=700&q=80"
-        alt="${escapeHTML(item.name)}"
-        loading="lazy"
-        onerror="this.style.display='none'"
-      >
-      <div class="menu-card-body">
-        <span class="menu-category">${escapeHTML(item.category)}</span>
-        <h3>${escapeHTML(item.name)}</h3>
-        <p>${escapeHTML(item.description)}</p>
-        <div class="menu-card-bottom">
-          <span class="menu-price">₹${item.price}</span>
-          <button class="small-button order-button"
-            data-name="${escapeHTML(item.name)}">Pre-order interest</button>
-        </div>
-      </div>
-    </article>
-  `).join("");
-
-  document.querySelectorAll(".order-button").forEach(button => {
-    button.addEventListener("click", () => {
-      showToast("Menu item noted. Online food ordering is not enabled in this demo.");
-    });
-  });
+button {
+    cursor: pointer;
 }
 
-document.querySelectorAll(".filter").forEach(button => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll(".filter").forEach(item =>
-      item.classList.remove("active")
-    );
-    button.classList.add("active");
-    renderMenu(button.dataset.category);
-  });
-});
-
-function isBooked(tableId, date, time) {
-  return bookings.some(booking =>
-    booking.table === tableId &&
-    booking.date === date &&
-    booking.time === time &&
-    booking.status === "Confirmed"
-  );
+a {
+    color: inherit;
+    text-decoration: none;
 }
 
-function renderTables() {
-  const date = $("booking-date").value;
-  const time = $("booking-time").value;
-
-  $("table-grid").innerHTML = tables.map(table => {
-    const occupied = date && time && isBooked(table.id, date, time);
-    const chosen = selectedTable === table.id;
-    const disabled = table.capacity < Number($("guest-count").value);
-
-    return `
-      <button type="button"
-        class="table-seat ${chosen ? "chosen" : ""}"
-        data-table="${table.id}"
-        ${occupied || disabled ? "disabled" : ""}
-        aria-pressed="${chosen}"
-        title="${occupied ? "Already booked" : disabled ? "Not enough capacity" : "Select table"}">
-        ${table.id}
-        <span>${occupied ? "Booked" : disabled ? "Too small" : `${table.capacity} seats`}</span>
-      </button>
-    `;
-  }).join("");
-
-  document.querySelectorAll(".table-seat:not(:disabled)").forEach(button => {
-    button.addEventListener("click", () => {
-      selectedTable = button.dataset.table;
-      updateSummary();
-      renderTables();
-    });
-  });
-
-  const selected = tables.find(table => table.id === selectedTable);
-  if (selected && (
-    selected.capacity < Number($("guest-count").value) ||
-    isBooked(selected.id, date, time)
-  )) {
-    selectedTable = null;
-    updateSummary();
-  }
-
-  $("table-message").textContent = date && time
-    ? "Choose an available table for your selected date and time."
-    : "Choose a date and time to check table availability.";
+.navbar {
+    min-height: 76px;
+    padding: 14px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-function updateSummary() {
-  $("summary-guests").textContent = $("guest-count").value;
-  $("summary-date").textContent = $("booking-date").value || "Not selected";
-  $("summary-time").textContent = $("booking-time").value || "Not selected";
-  $("summary-table").textContent = selectedTable || "Not selected";
-  $("summary-occasion").textContent = $("occasion").value;
+.logo {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 23px;
+    white-space: nowrap;
 }
 
-["booking-date", "booking-time", "guest-count", "occasion"].forEach(id => {
-  $(id).addEventListener("change", () => {
-    renderTables();
-    updateSummary();
-  });
-});
-
-$("booking-form").addEventListener("submit", event => {
-  event.preventDefault();
-
-  const name = $("guest-name").value.trim();
-  const email = $("guest-email").value.trim().toLowerCase();
-  const phone = $("guest-phone").value.trim();
-  const guests = Number($("guest-count").value);
-  const date = $("booking-date").value;
-  const time = $("booking-time").value;
-  const table = tables.find(item => item.id === selectedTable);
-
-  if (!name || !email || !phone || !date || !time) {
-    showToast("Please complete all required details.");
-    return;
-  }
-
-  if (!date || date < today) {
-    showToast("Please select today or a future date.");
-    return;
-  }
-
-  if (!table || table.capacity < guests) {
-    showToast("Please select a suitable table.");
-    return;
-  }
-
-  if (isBooked(table.id, date, time)) {
-    selectedTable = null;
-    renderTables();
-    updateSummary();
-    showToast("That table is already booked. Choose another.");
-    return;
-  }
-
-  const booking = {
-    id: "TT" + Date.now().toString().slice(-9),
-    name,
-    email,
-    phone,
-    guests,
-    date,
-    time,
-    table: table.id,
-    occasion: $("occasion").value,
-    request: $("special-request").value.trim(),
-    status: "Confirmed",
-    createdAt: new Date().toISOString()
-  };
-
-  bookings.push(booking);
-  saveData(KEYS.bookings, bookings);
-
-  $("booking-form").reset();
-  $("booking-date").value = today;
-  $("guest-count").value = "2";
-  selectedTable = null;
-
-  renderTables();
-  updateSummary();
-  renderAdmin();
-
-  $("lookup-email").value = email;
-  renderCustomerBookings(email);
-
-  showToast(`Reservation confirmed! Your booking ID is ${booking.id}`);
-  $("my-bookings").scrollIntoView({ behavior: "smooth" });
-});
-
-function renderCustomerBookings(email = "") {
-  const normalizedEmail = email.trim().toLowerCase();
-
-  if (!normalizedEmail) {
-    $("customer-bookings").innerHTML =
-      '<div class="empty-state">Enter your email to find your reservations.</div>';
-    return;
-  }
-
-  const results = bookings.filter(booking =>
-    booking.email === normalizedEmail
-  );
-
-  if (!results.length) {
-    $("customer-bookings").innerHTML =
-      '<div class="empty-state">No reservations found for this email.</div>';
-    return;
-  }
-
-  $("customer-bookings").innerHTML = results
-    .slice()
-    .reverse()
-    .map(booking => `
-      <article class="booking-card">
-        <div>
-          <h3>Reservation ${escapeHTML(booking.id)}</h3>
-          <p>${escapeHTML(booking.name)} · ${escapeHTML(booking.guests)} guest(s)</p>
-          <p>${escapeHTML(booking.date)} at ${escapeHTML(booking.time)}</p>
-          <p>Table ${escapeHTML(booking.table)} · ${escapeHTML(booking.occasion)}</p>
-          <span class="status ${booking.status === "Cancelled" ? "cancelled" : ""}">
-            ${escapeHTML(booking.status)}
-          </span>
-        </div>
-        <div>
-          ${booking.status === "Confirmed" ? `
-            <button class="small-button cancel-button"
-              data-cancel="${escapeHTML(booking.id)}">Cancel Booking</button>
-          ` : ""}
-        </div>
-      </article>
-    `).join("");
-
-  document.querySelectorAll("[data-cancel]").forEach(button => {
-    button.addEventListener("click", () => {
-      const id = button.dataset.cancel;
-      const booking = bookings.find(item => item.id === id);
-
-      if (!booking || booking.status !== "Confirmed") return;
-
-      if (!confirm(`Cancel reservation ${id}?`)) return;
-
-      booking.status = "Cancelled";
-      saveData(KEYS.bookings, bookings);
-      renderCustomerBookings(normalizedEmail);
-      renderAdmin();
-      renderTables();
-      showToast("Reservation cancelled.");
-    });
-  });
+.logo span {
+    color: var(--accent);
 }
 
-$("lookup-button").addEventListener("click", () => {
-  renderCustomerBookings($("lookup-email").value);
-});
-
-$("lookup-email").addEventListener("keydown", event => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    renderCustomerBookings($("lookup-email").value);
-  }
-});
-
-function renderReviews() {
-  const displayed = reviews.slice().reverse().slice(0, 20);
-
-  if (!displayed.length) {
-    $("review-list").innerHTML =
-      '<div class="empty-state">No reviews yet. Be the first to share your experience.</div>';
-    return;
-  }
-
-  $("review-list").innerHTML = displayed.map(review => `
-    <article class="review-card">
-      <h3>${escapeHTML(review.name)}</h3>
-      <div class="stars" aria-label="${review.rating} out of 5 stars">
-        ${"★".repeat(Number(review.rating))}${"☆".repeat(5 - Number(review.rating))}
-      </div>
-      <p>${escapeHTML(review.text)}</p>
-      <span class="small-note">${escapeHTML(review.date)}</span>
-    </article>
-  `).join("");
+.navbar nav {
+    display: flex;
+    align-items: center;
+    gap: 26px;
 }
 
-$("review-form").addEventListener("submit", event => {
-  event.preventDefault();
-
-  const name = $("review-name").value.trim();
-  const text = $("review-text").value.trim();
-
-  if (!name || !text) {
-    showToast("Please enter your name and review.");
-    return;
-  }
-
-  reviews.push({
-    name,
-    rating: Number($("review-rating").value),
-    text,
-    date: today
-  });
-
-  saveData(KEYS.reviews, reviews);
-  $("review-form").reset();
-  renderReviews();
-  showToast("Thank you for sharing your review!");
-});
-
-function renderAdmin() {
-  const confirmed = bookings.filter(item => item.status === "Confirmed");
-  const cancelled = bookings.filter(item => item.status === "Cancelled");
-
-  $("total-bookings").textContent = bookings.length;
-  $("confirmed-bookings").textContent = confirmed.length;
-  $("cancelled-bookings").textContent = cancelled.length;
-  $("total-guests").textContent = confirmed.reduce(
-    (sum, booking) => sum + Number(booking.guests), 0
-  );
-
-  if (!bookings.length) {
-    $("admin-bookings").innerHTML =
-      '<tr><td colspan="8">No reservations have been created yet.</td></tr>';
-  } else {
-    $("admin-bookings").innerHTML = bookings.slice().reverse().map(booking => `
-      <tr>
-        <td>${escapeHTML(booking.id)}</td>
-        <td>${escapeHTML(booking.name)}</td>
-        <td>${escapeHTML(booking.date)}</td>
-        <td>${escapeHTML(booking.time)}</td>
-        <td>${escapeHTML(booking.table)}</td>
-        <td>${escapeHTML(booking.guests)}</td>
-        <td><span class="status ${booking.status === "Cancelled" ? "cancelled" : ""}">
-          ${escapeHTML(booking.status)}</span></td>
-        <td>
-          ${booking.status === "Confirmed" ? `
-            <button class="small-button" data-admin-cancel="${escapeHTML(booking.id)}">
-              Cancel
-            </button>` : "—"}
-        </td>
-      </tr>
-    `).join("");
-  }
-
-  document.querySelectorAll("[data-admin-cancel]").forEach(button => {
-    button.addEventListener("click", () => {
-      const booking = bookings.find(item => item.id === button.dataset.adminCancel);
-      if (!booking || booking.status !== "Confirmed") return;
-      if (!confirm("Cancel this reservation?")) return;
-
-      booking.status = "Cancelled";
-      saveData(KEYS.bookings, bookings);
-      renderAdmin();
-      renderTables();
-      renderCustomerBookings($("lookup-email").value);
-      showToast("Reservation cancelled.");
-    });
-  });
-
-  renderWaitlist();
+.navbar nav a {
+    font-size: 13px;
+    color: #675344;
+    transition: color .2s;
 }
 
-$("export-button").addEventListener("click", () => {
-  if (!bookings.length) {
-    showToast("There are no bookings to export.");
-    return;
-  }
-
-  const columns = [
-    "id", "name", "email", "phone", "date", "time",
-    "table", "guests", "occasion", "status"
-  ];
-
-  const csvCell = value =>
-    '"' + String(value ?? "").replace(/"/g, '""') + '"';
-
-  const csv = [
-    columns.join(","),
-    ...bookings.map(booking =>
-      columns.map(column => csvCell(booking[column])).join(",")
-    )
-  ].join("\r\n");
-
-  const blob = new Blob(["\uFEFF" + csv], {
-    type: "text/csv;charset=utf-8;"
-  });
-
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "restaurant-bookings.csv";
-  link.click();
-  URL.revokeObjectURL(url);
-
-  showToast("Booking report exported.");
-});
-
-$("waitlist-form").addEventListener("submit", event => {
-  event.preventDefault();
-
-  const name = $("wait-name").value.trim();
-  const email = $("wait-email").value.trim().toLowerCase();
-  const date = $("wait-date").value;
-  const time = $("wait-time").value;
-
-  if (date < today) {
-    showToast("Please select today or a future date.");
-    return;
-  }
-
-  const duplicate = waitlist.some(item =>
-    item.email === email &&
-    item.date === date &&
-    item.time === time &&
-    item.status === "Waiting"
-  );
-
-  if (duplicate) {
-    showToast("This guest is already on the waitlist for that time.");
-    return;
-  }
-
-  waitlist.push({
-    id: "WL" + Date.now().toString().slice(-8),
-    name,
-    email,
-    date,
-    time,
-    status: "Waiting"
-  });
-
-  saveData(KEYS.waitlist, waitlist);
-  $("waitlist-form").reset();
-  $("wait-date").min = today;
-  renderWaitlist();
-  showToast("Guest added to the waitlist.");
-});
-
-function renderWaitlist() {
-  if (!waitlist.length) {
-    $("waitlist-list").innerHTML =
-      '<div class="empty-state">The waitlist is currently empty.</div>';
-    return;
-  }
-
-  $("waitlist-list").innerHTML = waitlist.slice().reverse().map(item => `
-    <article class="booking-card">
-      <div>
-        <h3>${escapeHTML(item.name)}</h3>
-        <p>${escapeHTML(item.email)}</p>
-        <p>${escapeHTML(item.date)} at ${escapeHTML(item.time)}</p>
-        <span class="status">${escapeHTML(item.status)}</span>
-      </div>
-      <div>
-        ${item.status === "Waiting" ? `
-          <button class="small-button" data-wait-remove="${escapeHTML(item.id)}">
-            Remove
-          </button>
-        ` : ""}
-      </div>
-    </article>
-  `).join("");
-
-  document.querySelectorAll("[data-wait-remove]").forEach(button => {
-    button.addEventListener("click", () => {
-      waitlist = waitlist.filter(item => item.id !== button.dataset.waitRemove);
-      saveData(KEYS.waitlist, waitlist);
-      renderWaitlist();
-      showToast("Waitlist entry removed.");
-    });
-  });
+.navbar nav a:hover {
+    color: var(--accent);
 }
 
-renderMenu();
-renderTables();
-updateSummary();
-renderCustomerBookings();
-renderReviews();
-renderAdmin();
+.nav-button, .primary-btn {
+    background: var(--brown);
+    color: white;
+    border: 1px solid var(--brown);
+    border-radius: 6px;
+    padding: 12px 20px;
+    display: inline-block;
+    transition: .2s;
+}
+
+.nav-button {
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.nav-button:hover, .primary-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.primary-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.secondary-btn {
+    background: var(--paper);
+    color: var(--brown);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 15px;
+}
+
+.secondary-btn:hover {
+    background: #f2e5d7;
+}
+
+.hero {
+    min-height: 580px;
+    display: flex;
+    align-items: center;
+    padding: 65px 7%;
+    color: white;
+    background:
+        linear-gradient(90deg, rgba(27, 16, 9, .90), rgba(27, 16, 9, .54) 52%, rgba(27, 16, 9, .12)),
+        url("https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2000&q=85")
+        center 55% / cover no-repeat;
+}
+
+.hero-content {
+    max-width: 690px;
+}
+
+.eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 15px;
+}
+
+.hero .eyebrow {
+    color: #e9c49b;
+}
+
+.hero h1, .page-banner h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(38px, 5vw, 64px);
+    line-height: 1.12;
+    font-weight: 600;
+}
+
+.hero h1 em {
+    color: #e8c29b;
+    font-weight: 400;
+}
+
+.hero-description {
+    max-width: 475px;
+    margin: 24px 0;
+    color: #f4e9dc;
+    font-size: 15px;
+}
+
+.highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 55px;
+    font-size: 12px;
+}
+
+.welcome {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 75px 24px 85px;
+    text-align: center;
+}
+
+.welcome h2 {
+    font: 600 clamp(27px, 3vw, 38px)/1.3 'Playfair Display', serif;
+    margin-bottom: 17px;
+}
+
+.welcome > p:not(.eyebrow) {
+    color: var(--muted);
+    max-width: 630px;
+    margin: 0 auto 25px;
+}
+
+.page {
+    display: none;
+    min-height: 65vh;
+}
+
+.page.active {
+    display: block;
+}
+
+.page-banner {
+    padding: 48px 7%;
+    color: white;
+    background:
+        linear-gradient(90deg, rgba(33, 19, 10, .85), rgba(33, 19, 10, .35)),
+        url("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1800&q=80")
+        center 50% / cover no-repeat;
+}
+
+.page-banner .eyebrow {
+    color: #e9c49b;
+}
+
+.page-banner h1 {
+    font-size: clamp(34px, 4vw, 46px);
+}
+
+.page-banner > p:last-child {
+    margin-top: 10px;
+    color: #f3e5d7;
+}
+
+.booking-layout {
+    max-width: 1300px;
+    margin: 35px auto 65px;
+    padding: 0 25px;
+    display: grid;
+    grid-template-columns: minmax(280px, .85fr) minmax(350px, 1.15fr);
+    gap: 25px;
+    align-items: start;
+}
+
+.panel {
+    padding: 25px;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 6px 22px rgba(66, 43, 25, .04);
+}
+
+.panel h2 {
+    font: 600 23px 'Playfair Display', serif;
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin: 14px 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #dfd3c5;
+    border-radius: 5px;
+    background: white;
+    color: var(--dark);
+    outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(146, 83, 49, .09);
+}
+
+textarea {
+    resize: vertical;
+}
+
+.full {
+    width: 100%;
+    margin-top: 18px;
+}
+
+.message {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.message.error {
+    color: var(--red);
+}
+
+.message.success {
+    color: var(--green);
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 10px 0 20px;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.legend span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.available {
+    background: #27885a;
+}
+
+.occupied {
+    background: #c33c37;
+}
+
+.selected-dot {
+    background: #d58b27;
+}
+
+.restaurant-floor {
+    padding: 18px;
+    border: 5px solid #e0d1bd;
+    border-radius: 7px;
+    background:
+        linear-gradient(rgba(130, 91, 56, .08), rgba(130, 91, 56, .08)),
+        repeating-linear-gradient(90deg, #e7d2b4 0px, #e7d2b4 25px, #e0c7a5 26px, #e0c7a5 27px);
+}
+
+.floor-label, .entrance {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #725034;
+    padding: 8px;
+}
+
+.table-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px 10px;
+    padding: 14px 0;
+}
+
+.table-seat {
+    min-height: 65px;
+    border: 2px solid #c8b18e;
+    border-radius: 7px;
+    color: #fff;
+    background: #287650;
+    font-size: 12px;
+    font-weight: 700;
+    transition: .15s;
+}
+
+.table-seat small {
+    display: block;
+    font-size: 9px;
+    font-weight: 400;
+}
+
+.table-seat:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.table-seat.occupied {
+    background: #b53e37;
+    border-color: #9b2d29;
+    cursor: not-allowed;
+}
+
+.table-seat.selected {
+    background: #d28a26;
+    border-color: #9a5c10;
+    outline: 3px solid rgba(210, 138, 38, .2);
+}
+
+.table-seat:disabled {
+    opacity: .85;
+}
+
+.summary {
+    padding: 17px;
+    margin-top: 20px;
+    background: #f8f0e5;
+    border-radius: 7px;
+}
+
+.summary h3 {
+    font: 600 17px 'Playfair Display', serif;
+    margin-bottom: 6px;
+}
+
+.summary p {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.lookup-panel {
+    max-width: 550px;
+    margin: 35px auto;
+}
+
+.results {
+    max-width: 1100px;
+    padding: 0 20px;
+    margin: 0 auto 60px;
+}
+
+.booking-card {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    padding: 22px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+}
+
+.booking-card h3 {
+    font: 600 21px 'Playfair Display', serif;
+    margin-bottom: 10px;
+}
+
+.booking-card p {
+    font-size: 13px;
+    margin: 5px 0;
+}
+
+.booking-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.status {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 4px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #d9efdf;
+    color: #1d6839;
+}
+
+.status.cancelled {
+    background: #f9dddd;
+    color: #a72e2e;
+}
+
+.status.arrived {
+    background: #dce8fb;
+    color: #2c538f;
+}
+
+.status.completed {
+    background: #e8e0f8;
+    color: #644398;
+}
+
+.admin-login {
+    min-height: 580px;
+    padding: 50px 20px;
+    display: grid;
+    place-items: center;
+    background:
+        linear-gradient(rgba(47, 27, 15, .88), rgba(47, 27, 15, .88)),
+        url("https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80")
+        center / cover;
+}
+
+.login-card {
+    width: min(100%, 390px);
+    padding: 35px;
+    background: var(--paper);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.login-symbol {
+    font-size: 38px;
+    color: var(--accent);
+}
+
+.login-card h1 {
+    font: 600 29px 'Playfair Display', serif;
+}
+
+.login-card > p {
+    margin: 5px 0 20px;
+    color: var(--muted);
+}
+
+.login-card form {
+    text-align: left;
+}
+
+.login-card small {
+    display: block;
+    margin-top: 20px;
+    color: var(--muted);
+}
+
+.dashboard {
+    padding: 35px 4%;
+}
+
+.dashboard-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.dashboard-heading h1 {
+    font: 600 34px 'Playfair Display', serif;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    padding: 20px;
+    border: 1px solid var(--border);
+    background: var(--paper);
+    border-radius: 8px;
+}
+
+.stat-card span, .stat-card strong {
+    display: block;
+}
+
+.stat-card span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.stat-card strong {
+    font: 600 30px 'Playfair Display', serif;
+    margin-top: 5px;
+}
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 850px;
+}
+
+th, td {
+    padding: 13px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    background: #f7efe4;
+    font-weight: 700;
+}
+
+td button {
+    margin: 2px;
+    font-size: 11px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+footer {
+    padding: 35px 20px;
+    text-align: center;
+    background: #321f14;
+    color: #f6e8d7;
+}
+
+.footer-logo {
+    display: inline-block;
+    color: white;
+}
+
+.footer-logo span {
+    color: #d4a77b;
+}
+
+footer p {
+    font-size: 13px;
+    margin-top: 8px;
+    color: #dfc9b2;
+}
+
+footer small {
+    display: block;
+    margin-top: 15px;
+    color: #cdb39b;
+}
+
+.late-note {
+    font-size: 12px;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(25, 15, 9, .72);
+    padding: 20px;
+    display: grid;
+    place-items: center;
+    overflow-y: auto;
+}
+
+.receipt {
+    position: relative;
+    background: white;
+    width: min(100%, 480px);
+    padding: 35px;
+    border-radius: 9px;
+}
+
+.close-button {
+    position: absolute;
+    top: 8px;
+    right: 14px;
+    border: 0;
+    background: none;
+    font-size: 29px;
+}
+
+.receipt-brand {
+    font: 700 25px 'Playfair Display', serif;
+    color: var(--brown);
+    text-align: center;
+}
+
+.receipt h2 {
+    font: 600 24px 'Playfair Display', serif;
+    text-align: center;
+    margin: 10px 0 15px;
+}
+
+#receiptStatus {
+    display: table;
+    margin: 0 auto 20px;
+}
+
+.receipt-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 9px 0;
+    border-bottom: 1px dashed #ddd;
+    font-size: 13px;
+}
+
+.receipt-line span:first-child {
+    color: var(--muted);
+}
+
+.receipt-line span:last-child {
+    text-align: right;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.receipt-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.receipt-actions button {
+    flex: 1;
+}
+
+.late-warning {
+    color: var(--red);
+    background: #fff0ef;
+    padding: 12px;
+    margin-top: 15px;
+    font-size: 12px;
+    border-radius: 5px;
+}
+
+@media (max-width: 900px) {
+    .navbar {
+        flex-wrap: wrap;
+    }
+
+    .navbar nav {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .booking-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        min-height: 520px;
+    }
+}
+
+@media (max-width: 560px) {
+    .navbar {
+        padding: 12px 4%;
+        gap: 12px;
+    }
+
+    .logo {
+        font-size: 20px;
+    }
+
+    .nav-button {
+        padding: 9px 11px;
+    }
+
+    .navbar nav {
+        gap: 12px;
+    }
+
+    .navbar nav a {
+        font-size: 11px;
+    }
+
+    .hero {
+        padding: 45px 7%;
+        min-height: 510px;
+        background-position: 58% center;
+    }
+
+    .hero h1 {
+        font-size: 39px;
+    }
+
+    .highlights {
+        gap: 12px;
+        margin-top: 35px;
+    }
+
+    .booking-layout {
+        padding: 0 12px;
+        margin-top: 20px;
+    }
+
+    .panel {
+        padding: 17px;
+    }
+
+    .table-grid {
+        gap: 10px 6px;
+    }
+
+    .table-seat {
+        min-height: 58px;
+        font-size: 10px;
+    }
+
+    .dashboard-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .receipt {
+        padding: 25px 18px;
+    }
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #receiptModal, #receiptModal * {
+        visibility: visible;
+    }
+
+    #receiptModal {
+        display: block !important;
+        position: absolute;
+        inset: 0;
+        background: white;
+        padding: 0;
+        overflow: visible;
+    }
+
+    .receipt {
+        width: 100%;
+        max-width: none;
+        box-shadow: none;
+        border: none;
+        padding: 20px;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}
