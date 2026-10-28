@@ -1,254 +1,257 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Table & Taste | Restaurant Reservations</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table & Taste | Restaurant Reservations</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="navbar">
-    <a href="#home" class="logo">Table <span>&</span> Taste</a>
+
+<header class="navbar">
+    <a class="logo" href="#" onclick="showPage('home')">♨ Table <span>&</span> Taste</a>
+
     <nav>
-      <a href="#home">Home</a>
-      <a href="#menu">Menu</a>
-      <a href="#reservation">Reserve</a>
-      <a href="#my-bookings">My Bookings</a>
-      <a href="#reviews">Reviews</a>
-      <a href="#admin">Admin</a>
+        <a href="#" onclick="showPage('home')">Home</a>
+        <a href="#" onclick="showPage('reservation')">Reservation</a>
+        <a href="#" onclick="showPage('bookings')">My Bookings</a>
+        <a href="#" onclick="showPage('admin')">Admin</a>
     </nav>
-    <a href="#reservation" class="nav-button">Book a Table</a>
-  </header>
 
-  <main>
-    <section class="hero" id="home">
-      <div class="hero-content">
-        <p class="eyebrow">A dining experience to remember</p>
-        <h1>Good Food.<br>Beautiful Moments.</h1>
-        <p>Reserve your perfect table and enjoy an unforgettable dining experience with us.</p>
-        <a href="#reservation" class="button">Reserve Your Table</a>
-        <a href="#menu" class="text-link">Explore Our Menu →</a>
-        <div class="hero-stats">
-          <div><strong>4.8/5</strong><span>Guest Rating</span></div>
-          <div><strong>20+</strong><span>Signature Dishes</span></div>
-          <div><strong>12</strong><span>Dining Tables</span></div>
+    <button class="nav-button" onclick="showPage('reservation')">Book a Table</button>
+</header>
+
+<main>
+    <!-- HOME PAGE -->
+    <section id="home" class="page active">
+        <div class="hero">
+            <div class="hero-content">
+                <p class="eyebrow">GOOD FOOD. BEAUTIFUL MOMENTS.</p>
+                <h1>Good Food<br>Brings People <em>Together.</em></h1>
+                <p class="hero-description">
+                    Experience a warm atmosphere, thoughtful hospitality
+                    and a memorable dining experience at Table & Taste.
+                </p>
+                <button class="primary-btn" onclick="showPage('reservation')">
+                    Book Your Table →
+                </button>
+
+                <div class="highlights">
+                    <span>✦ Fresh Ingredients</span>
+                    <span>✦ Cosy Ambience</span>
+                    <span>✦ Great Service</span>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="hero-image">
-        <div class="image-label">
-          <span>✦ Our speciality</span>
-          <h3>Made with love, served with care.</h3>
+
+        <section class="welcome">
+            <p class="eyebrow">WELCOME TO TABLE & TASTE</p>
+            <h2>Your table. Your time. Your experience.</h2>
+            <p>
+                Whether it is a family dinner, a special occasion or a
+                quiet evening with friends, we have a place for you.
+                Choose your preferred table and make your reservation
+                in just a few simple steps.
+            </p>
+            <button class="primary-btn" onclick="showPage('reservation')">
+                Find Your Table →
+            </button>
+        </section>
+    </section>
+
+    <!-- RESERVATION PAGE -->
+    <section id="reservation" class="page">
+        <div class="page-banner">
+            <p class="eyebrow">YOUR EVENING STARTS HERE</p>
+            <h1>Book Your Table</h1>
+            <p>An unforgettable dining experience awaits.</p>
         </div>
-      </div>
-    </section>
 
-    <section class="section" id="menu">
-      <div class="section-heading">
-        <p class="eyebrow">Discover our flavours</p>
-        <h2>Our Popular Menu</h2>
-        <p>Fresh ingredients, carefully prepared for you.</p>
-      </div>
-      <div class="menu-filters">
-        <button class="filter active" data-category="All">All</button>
-        <button class="filter" data-category="Starters">Starters</button>
-        <button class="filter" data-category="Main Course">Main Course</button>
-        <button class="filter" data-category="Desserts">Desserts</button>
-        <button class="filter" data-category="Drinks">Drinks</button>
-      </div>
-      <div class="menu-grid" id="menu-grid"></div>
-    </section>
+        <div class="booking-layout">
+            <div class="panel">
+                <h2>Reservation Details</h2>
 
-    <section class="section reservation-section" id="reservation">
-      <div class="section-heading">
-        <p class="eyebrow">Your table is waiting</p>
-        <h2>Make a Reservation</h2>
-        <p>Choose your date, time and preferred table.</p>
-      </div>
+                <form id="bookingForm">
+                    <label for="customerName">Full Name</label>
+                    <input id="customerName" type="text" placeholder="Enter your name" required>
 
-      <div class="reservation-layout">
-        <form id="booking-form" class="panel">
-          <h3>Your Details</h3>
-          <div class="form-grid">
-            <label>Full Name
-              <input type="text" id="guest-name" placeholder="Enter your name" required>
-            </label>
-            <label>Email Address
-              <input type="email" id="guest-email" placeholder="you@example.com" required>
-            </label>
-            <label>Phone Number
-              <input type="tel" id="guest-phone" placeholder="Your phone number"
-                     pattern="[0-9+() -]{7,20}" required>
-            </label>
-            <label>Number of Guests
-              <select id="guest-count" required>
-                <option value="1">1 guest</option>
-                <option value="2" selected>2 guests</option>
-                <option value="3">3 guests</option>
-                <option value="4">4 guests</option>
-                <option value="5">5 guests</option>
-                <option value="6">6 guests</option>
-              </select>
-            </label>
-            <label>Reservation Date
-              <input type="date" id="booking-date" required>
-            </label>
-            <label>Reservation Time
-              <select id="booking-time" required>
-                <option value="">Choose a time</option>
-                <option>11:00 AM</option>
-                <option>12:00 PM</option>
-                <option>01:00 PM</option>
-                <option>02:00 PM</option>
-                <option>06:00 PM</option>
-                <option>07:00 PM</option>
-                <option>08:00 PM</option>
-                <option>09:00 PM</option>
-              </select>
-            </label>
-            <label>Occasion
-              <select id="occasion">
-                <option>Regular Dining</option>
-                <option>Birthday</option>
-                <option>Anniversary</option>
-                <option>Family Gathering</option>
-                <option>Business Meeting</option>
-              </select>
-            </label>
-            <label>Special Requests
-              <input type="text" id="special-request" placeholder="Window seat, allergies, etc.">
-            </label>
-          </div>
+                    <label for="customerEmail">Email Address</label>
+                    <input id="customerEmail" type="email" placeholder="Enter your email" required>
 
-          <h3 class="subheading">Choose Your Table</h3>
-          <div class="table-legend">
-            <span><i class="dot available"></i> Available</span>
-            <span><i class="dot selected"></i> Selected</span>
-            <span><i class="dot occupied"></i> Booked</span>
-          </div>
-          <div class="table-grid" id="table-grid"></div>
-          <p id="table-message" class="small-note">Select a table to continue.</p>
-          <button class="button full-button" type="submit">Confirm Reservation</button>
-          <p class="small-note">Demo version: bookings are saved in this browser only.</p>
-        </form>
+                    <label for="customerPhone">Phone Number</label>
+                    <input id="customerPhone" type="tel" placeholder="Enter your phone number"
+                           pattern="[0-9+\-\s]{7,16}" required>
 
-        <aside class="panel booking-summary">
-          <h3>Booking Summary</h3>
-          <div class="summary-row"><span>Guests</span><strong id="summary-guests">2</strong></div>
-          <div class="summary-row"><span>Date</span><strong id="summary-date">Not selected</strong></div>
-          <div class="summary-row"><span>Time</span><strong id="summary-time">Not selected</strong></div>
-          <div class="summary-row"><span>Table</span><strong id="summary-table">Not selected</strong></div>
-          <div class="summary-row"><span>Occasion</span><strong id="summary-occasion">Regular Dining</strong></div>
-          <div class="summary-total">
-            <span>Reservation Fee</span>
-            <strong>₹0</strong>
-          </div>
-          <p class="small-note">No payment is required for this demo reservation.</p>
-        </aside>
-      </div>
-    </section>
+                    <label for="bookingDate">Date</label>
+                    <input id="bookingDate" type="date" required>
 
-    <section class="section" id="my-bookings">
-      <div class="section-heading">
-        <p class="eyebrow">Your dining plans</p>
-        <h2>My Bookings</h2>
-        <p>Find your reservations using the email address used during booking.</p>
-      </div>
-      <div class="lookup-bar">
-        <input type="email" id="lookup-email" placeholder="Enter your booking email">
-        <button class="button" id="lookup-button">Find Bookings</button>
-      </div>
-      <div id="customer-bookings" class="booking-list"></div>
-    </section>
+                    <label for="bookingTime">Time</label>
+                    <input id="bookingTime" type="time" required>
 
-    <section class="section reviews-section" id="reviews">
-      <div class="section-heading">
-        <p class="eyebrow">Words from our guests</p>
-        <h2>Guest Reviews</h2>
-        <p>Share your dining experience with us.</p>
-      </div>
-      <div class="review-layout">
-        <div id="review-list" class="review-list"></div>
-        <form id="review-form" class="panel">
-          <h3>Write a Review</h3>
-          <label>Your Name
-            <input type="text" id="review-name" required placeholder="Your name">
-          </label>
-          <label>Your Rating
-            <select id="review-rating">
-              <option value="5">★★★★★ - Excellent</option>
-              <option value="4">★★★★ - Very Good</option>
-              <option value="3">★★★ - Good</option>
-              <option value="2">★★ - Fair</option>
-              <option value="1">★ - Needs Improvement</option>
-            </select>
-          </label>
-          <label>Your Experience
-            <textarea id="review-text" rows="4" required maxlength="500"
-                      placeholder="Tell us about your experience..."></textarea>
-          </label>
-          <button class="button full-button" type="submit">Submit Review</button>
-        </form>
-      </div>
-    </section>
+                    <label for="guestCount">Number of Guests</label>
+                    <select id="guestCount" required>
+                        <option value="1">1 Guest</option>
+                        <option value="2" selected>2 Guests</option>
+                        <option value="3">3 Guests</option>
+                        <option value="4">4 Guests</option>
+                        <option value="5">5 Guests</option>
+                        <option value="6">6 Guests</option>
+                    </select>
 
-    <section class="section admin-section" id="admin">
-      <div class="section-heading">
-        <p class="eyebrow">Restaurant management</p>
-        <h2>Admin Dashboard</h2>
-        <p>Demo dashboard showing reservations stored in this browser.</p>
-      </div>
-      <div class="admin-warning">This is a demonstration dashboard, not a secure admin login.</div>
-      <div class="stats-grid">
-        <div class="stat-card"><span>Total Bookings</span><strong id="total-bookings">0</strong></div>
-        <div class="stat-card"><span>Confirmed</span><strong id="confirmed-bookings">0</strong></div>
-        <div class="stat-card"><span>Cancelled</span><strong id="cancelled-bookings">0</strong></div>
-        <div class="stat-card"><span>Total Guests</span><strong id="total-guests">0</strong></div>
-      </div>
-      <div class="panel table-panel">
-        <div class="admin-heading">
-          <h3>Reservation Management</h3>
-          <button class="button button-light" id="export-button">Export CSV</button>
+                    <label for="diningLocation">Dining Location</label>
+                    <select id="diningLocation" required>
+                        <option value="Indoor">Indoor</option>
+                        <option value="Window">Window</option>
+                        <option value="Garden">Garden</option>
+                    </select>
+
+                    <label for="specialRequest">Special Request (Optional)</label>
+                    <textarea id="specialRequest" rows="3"
+                              placeholder="Birthday, anniversary, etc."></textarea>
+
+                    <button type="button" class="primary-btn full"
+                            onclick="findTables()">Find Available Tables</button>
+
+                    <p id="tableMessage" class="message"></p>
+                </form>
+            </div>
+
+            <div class="panel table-panel">
+                <h2>Select Your Table</h2>
+
+                <div class="legend">
+                    <span><i class="dot available"></i> Available</span>
+                    <span><i class="dot occupied"></i> Occupied</span>
+                    <span><i class="dot selected-dot"></i> Selected</span>
+                </div>
+
+                <div class="restaurant-floor">
+                    <div class="floor-label">WINDOW SIDE</div>
+                    <div class="table-grid" id="tableGrid"></div>
+                    <div class="entrance">ENTRANCE</div>
+                </div>
+
+                <div class="summary">
+                    <h3>Booking Summary</h3>
+                    <p id="summaryText">Select a date, time and table to continue.</p>
+                </div>
+
+                <button id="confirmButton" class="primary-btn full"
+                        onclick="confirmBooking()" disabled>
+                    Confirm Reservation
+                </button>
+            </div>
         </div>
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Booking ID</th><th>Guest</th><th>Date</th>
-                <th>Time</th><th>Table</th><th>Guests</th><th>Status</th><th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="admin-bookings"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="panel waitlist-panel">
-        <h3>Waitlist Management</h3>
-        <p class="small-note">Guests who cannot find an available table can request a waitlist entry.</p>
-        <form id="waitlist-form" class="waitlist-form">
-          <input id="wait-name" placeholder="Guest name" required>
-          <input id="wait-email" type="email" placeholder="Guest email" required>
-          <input id="wait-date" type="date" required>
-          <select id="wait-time" required>
-            <option value="">Choose time</option>
-            <option>11:00 AM</option><option>12:00 PM</option>
-            <option>01:00 PM</option><option>02:00 PM</option>
-            <option>06:00 PM</option><option>07:00 PM</option>
-            <option>08:00 PM</option><option>09:00 PM</option>
-          </select>
-          <button class="button" type="submit">Join Waitlist</button>
-        </form>
-        <div id="waitlist-list" class="booking-list"></div>
-      </div>
     </section>
-  </main>
 
-  <footer>
-    <a href="#home" class="logo">Table <span>&</span> Taste</a>
-    <p>Good food, great company, beautiful memories.</p>
-    <p>© <span id="current-year"></span> Table & Taste. Student project demo.</p>
-  </footer>
+    <!-- MY BOOKINGS PAGE -->
+    <section id="bookings" class="page">
+        <div class="page-banner">
+            <p class="eyebrow">YOUR RESERVATIONS</p>
+            <h1>My Bookings</h1>
+            <p>View, print or cancel your reservations.</p>
+        </div>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="script.js"></script>
+        <div class="panel lookup-panel">
+            <h2>Find Your Booking</h2>
+            <form id="lookupForm">
+                <label for="lookupEmail">Email Address</label>
+                <input id="lookupEmail" type="email" placeholder="Enter the email used for booking" required>
+                <button class="primary-btn" type="submit">Find Booking</button>
+            </form>
+        </div>
+
+        <div id="bookingResults" class="results"></div>
+    </section>
+
+    <!-- ADMIN PAGE -->
+    <section id="admin" class="page">
+        <div id="adminLogin" class="admin-login">
+            <div class="login-card">
+                <div class="login-symbol">♨</div>
+                <h1>Table & Taste</h1>
+                <p>Admin Login</p>
+
+                <form id="adminForm">
+                    <label for="adminUsername">Username</label>
+                    <input id="adminUsername" type="text" placeholder="Enter username" required>
+
+                    <label for="adminPassword">Password</label>
+                    <input id="adminPassword" type="password" placeholder="Enter password" required>
+
+                    <button class="primary-btn full" type="submit">Login</button>
+                    <p id="loginMessage" class="message"></p>
+                </form>
+                <small>Authorised personnel only.</small>
+            </div>
+        </div>
+
+        <div id="adminDashboard" class="dashboard hidden">
+            <div class="dashboard-heading">
+                <div>
+                    <p class="eyebrow">RESTAURANT MANAGEMENT</p>
+                    <h1>Admin Dashboard</h1>
+                </div>
+                <div class="admin-actions">
+                    <button class="secondary-btn" onclick="exportCSV()">Export CSV</button>
+                    <button class="secondary-btn" onclick="adminLogout()">Logout</button>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card"><span>Total Bookings</span><strong id="totalCount">0</strong></div>
+                <div class="stat-card"><span>Confirmed</span><strong id="confirmedCount">0</strong></div>
+                <div class="stat-card"><span>Cancelled</span><strong id="cancelledCount">0</strong></div>
+            </div>
+
+            <div class="panel">
+                <h2>All Reservations</h2>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Contact</th>
+                                <th>Date & Time</th>
+                                <th>Table</th>
+                                <th>Guests</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody"></tbody>
+                    </table>
+                </div>
+                <p id="adminEmpty" class="message"></p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <a class="logo footer-logo" href="#" onclick="showPage('home')">Table <span>&</span> Taste</a>
+    <p>Good food. Warm hospitality. Memorable moments.</p>
+    <p class="late-note">Please arrive on time. Reservations may be cancelled after a 15-minute grace period.</p>
+    <small>© <span id="year"></span> Table & Taste</small>
+</footer>
+
+<!-- RECEIPT -->
+<div id="receiptModal" class="modal hidden">
+    <div class="receipt">
+        <button class="close-button no-print" onclick="closeReceipt()">×</button>
+        <div class="receipt-brand">♨ Table & Taste</div>
+        <h2>Reservation Receipt</h2>
+        <p id="receiptStatus" class="status confirmed">Confirmed</p>
+        <div id="receiptDetails"></div>
+        <p id="lateWarning" class="late-warning hidden"></p>
+        <div class="receipt-actions no-print">
+            <button class="primary-btn" onclick="window.print()">Print / Save PDF</button>
+            <button class="secondary-btn" onclick="closeReceipt()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
